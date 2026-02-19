@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, ReactNode } from 'react'
+import { useState, createContext, useContext } from 'react'
 import LandingPage from './pages/LandingPage'
 import HomePage from './pages/HomePage'
 import ProductsPage from './pages/ProductsPage'
@@ -8,7 +8,7 @@ import CheckoutPage from './pages/CheckoutPage'
 
 type Page = 'landing' | 'home' | 'products' | 'product-detail' | 'cart' | 'checkout'
 
-interface Product {
+export interface Product {
   id: string
   name: string
   price: number
@@ -22,7 +22,7 @@ interface Product {
   discount?: number
 }
 
-interface CartItem extends Product {
+export interface CartItem extends Product {
   quantity: number
 }
 
@@ -36,9 +36,13 @@ interface AppContextType {
   removeFromCart: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
   cartTotal: number
+  relatedProducts: Product[]
+  setRelatedProducts: (products: Product[]) => void
+  sectionProducts: Product[]
+  setSectionProducts: (products: Product[]) => void
 }
 
-const AppContext = createContext < AppContextType | undefined > (undefined)
+const AppContext = createContext<AppContextType | undefined>(undefined)
 
 export const useApp = () => {
   const context = useContext(AppContext)
@@ -47,9 +51,11 @@ export const useApp = () => {
 }
 
 function App() {
-  const [currentPage, setCurrentPage] = useState < Page > ('landing')
-  const [selectedProduct, setSelectedProduct] = useState < Product | null > (null)
-  const [cart, setCart] = useState < CartItem[] > ([])
+  const [currentPage, setCurrentPage] = useState<Page>('landing')
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
+  const [sectionProducts, setSectionProducts] = useState<Product[]>([])
 
   const addToCart = (product: Product) => {
     setCart(prev => {
@@ -92,7 +98,11 @@ function App() {
     addToCart,
     removeFromCart,
     updateQuantity,
-    cartTotal
+    cartTotal,
+    relatedProducts,
+    setRelatedProducts,
+    sectionProducts,
+    setSectionProducts,
   }
 
   return (
