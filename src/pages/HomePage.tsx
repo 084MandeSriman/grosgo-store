@@ -1,5 +1,6 @@
 import { ArrowRight, Leaf, Sparkles, ShoppingCart, Award, Star, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useApp } from '../App'
@@ -63,84 +64,61 @@ const FloatingVeggies = () => (
 )
 
 export default function HomePage() {
-  const { setCurrentPage, setSelectedProduct, setRelatedProducts, setSectionProducts } = useApp()
+  const {
+    setCurrentPage,
+    setSelectedProduct,
+    setRelatedProducts,
+    setSectionProducts,
+    fullProductList,
+    setCurrentCategory,
+    targetSection,
+    setTargetSection,
+  } = useApp()
 
-  // Helper to create full product objects
-  const createProduct = (
-    id: string,
-    name: string,
-    price: string | number,
-    brand: string = 'GROSGO',
-    emoji: string = '🥬',
-    originalPrice?: string | number,
-    discountedPrice?: string | number,
-    fromPrice?: string
-  ) => {
-    const parsePrice = (p: string | number) => (typeof p === 'string' ? parseFloat(p.replace('£', '')) : p)
-    const numPrice = parsePrice(price)
-    const numOriginal = originalPrice ? parsePrice(originalPrice) : undefined
-    const numDiscounted = discountedPrice ? parsePrice(discountedPrice) : undefined
-    return {
-      id,
-      name,
-      price: numDiscounted || numPrice,
-      originalPrice: numOriginal,
-      unit: '1 piece',
-      image: emoji,
-      category: 'General',
-      rating: 4.5,
-      reviews: 100,
-      inStock: true,
-      discount: numOriginal ? Math.round((1 - (numDiscounted! / numOriginal)) * 100) : undefined,
+  const [loading, setLoading] = useState(true)
+
+  // Scroll to target section when home page loads
+  useEffect(() => {
+    if (targetSection) {
+      const element = document.getElementById(targetSection)
+      if (element) {
+        const yOffset = -100 // offset for fixed header
+        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
+        window.scrollTo({ top: y, behavior: 'smooth' })
+        setTargetSection(null)
+      }
     }
+  }, [targetSection, setTargetSection])
+
+  // Set loading false once products arrive
+  useEffect(() => {
+    if (fullProductList.length > 0) {
+      setLoading(false)
+    }
+  }, [fullProductList])
+
+  // Helper to get 4 random related products (excluding current)
+  const getRandomRelated = (currentId: string) => {
+    return fullProductList
+      .filter(p => p.id !== currentId)
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 4)
   }
 
-  // Define section product arrays
-  const offerProducts = [
-    { id: 'thotakoora', name: 'Thotakoora', price: '£50.00', emoji: '🥬' },
-    { id: 'sorrel-leaves', name: 'Sorrel Leaves', price: '£60.00', emoji: '🌿' },
-    { id: 'indian-beans', name: 'Indian Beans', price: '£60.00', emoji: '🫛' },
-    { id: 'snake-gourd', name: 'Snake gourd', price: '£60.00', emoji: '🥒' },
-    { id: 'moringa', name: 'Moringa', price: '£75.00', emoji: '🌱' },
-  ].map(p => createProduct(p.id, p.name, p.price, 'GROSGO', p.emoji))
+  // 🔥 FLAG-BASED FILTERING – NO HARDCODED IDs
+  const offerProducts = fullProductList.filter(p => p.is_offer)
+  const bestSellers = fullProductList.filter(p => p.is_best_seller)
+  const combos = fullProductList.filter(p => p.is_combo)
+  const productsList = fullProductList.filter(p => !p.is_offer && !p.is_best_seller && !p.is_combo)
 
-  const bestSellers = [
-    { id: 'fresh-ivy-gourd', name: 'Fresh Ivy Gourd', emoji: '🥒', price: '£30.00' },
-    { id: 'curry-leave-pack', name: 'Curry Leave Pack', emoji: '🌿', price: '£10.00' },
-    { id: 'fresh-okra', name: 'Fresh Okra(Bendi)', emoji: '🫑', price: '£50.00' },
-    { id: 'drumsticks', name: 'Drumsticks', emoji: '🥬', price: '£25.00' },
-    { id: 'coriander-bunch', name: 'Coriander Bunch', emoji: '🌱', price: '£20.00' },
-  ].map(p => createProduct(p.id, p.name, p.price, 'GROSGO', p.emoji))
-
-  const combos = [
-    { id: 'bachelor-combo', name: 'Bachelor Veg Combo Pack - 8 Items', price: '£11.99', emoji: '🥦' },
-    { id: 'economy-combo', name: 'Economy Combo Veg Pack For Family -12 Items', price: '£25.00', emoji: '🥦' },
-    { id: 'mini-family-combo', name: 'Mini Family Combo Veg Pack - 8 Items', price: '£12.99', emoji: '🥦' },
-  ].map(p => createProduct(p.id, p.name, p.price, 'GROSGO', p.emoji))
-
-  const productsList = [
-    { id: 'curly-leave-pack', name: 'Curly Leave Pack', brand: 'GROSGO', price: '£0.99', emoji: '🌿' },
-    { id: 'fresh-okra-bendi', name: 'Fresh Okra (Bendi)', brand: 'GROSGO', fromPrice: '£1.99', emoji: '🫑' },
-    { id: 'fresh-ivy-gourd-tindora', name: 'Fresh Ivy Gourd/Tindora', brand: 'GROSGO', fromPrice: '£1.99', emoji: '🥒' },
-    { id: 'bitter-gourd-karela', name: 'Bitter Gourd/Karela', brand: 'GROSGO', fromPrice: '£1.99', emoji: '🥬' },
-    { id: 'yellow-cucumber', name: 'Yellow cucumber/Dosakaaya / Dosakkai (Mixed Size)', brand: 'GROSGO', originalPrice: '7.99', discountedPrice: '3.99', emoji: '🥒' },
-    { id: 'indian-bottle-gourd', name: 'Indian Bottle Gourd/Long Dhoodi/Laukee', brand: 'GROSGO', fromPrice: '£2.99', emoji: '🥒' },
-    { id: 'arbi-chema', name: 'Arbi/Chema/Tara Root/Cheppankazhangu/Chempu', brand: 'GROSGO', originalPrice: '6.99', discountedPrice: '1.99', emoji: '🥔' },
-    { id: 'indian-onions', name: 'Indian Onions (Bombay) - 3kg', brand: 'GROSGO', price: '£2.99', emoji: '🧅' },
-    { id: 'tomato-vine', name: 'Tomato(vine)', brand: 'GROSGO', fromPrice: '£2.99', emoji: '🍅' },
-    { id: 'ginger-garlic-paste', name: 'Ginger Garlic Paste Jar - 1kg', brand: 'VILLAGE', price: '£3.99', emoji: '🧄' },
-  ].map(p =>
-    createProduct(
-      p.id,
-      p.name,
-      p.discountedPrice ? `£${p.discountedPrice}` : p.fromPrice || p.price,
-      p.brand,
-      p.emoji,
-      p.originalPrice ? `£${p.originalPrice}` : undefined,
-      p.discountedPrice ? `£${p.discountedPrice}` : undefined,
-      p.fromPrice
+  // Show loading spinner while products are being fetched
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-br from-[#0A0E27] via-[#0F172A] to-[#0A0E27] min-h-screen flex items-center justify-center">
+        <div className="text-emerald-400 text-2xl animate-pulse">Loading fresh groceries...</div>
+      </div>
     )
-  )
+  }
 
   return (
     <div className="overflow-x-hidden bg-gradient-to-br from-[#0A0E27] via-[#0F172A] to-[#0A0E27]">
@@ -369,16 +347,19 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
             {[
-              { name: 'New Arrivals', emoji: '✨', gradient: 'from-amber-400 to-yellow-400' },
-              { name: 'Rice Bag', emoji: '🍚', gradient: 'from-emerald-400 to-teal-400' },
-              { name: 'Vegetables', emoji: '🥬', gradient: 'from-green-400 to-emerald-400' },
-              { name: 'Idly Dosa Batter Box - Readymade', emoji: '🥞', gradient: 'from-purple-400 to-indigo-400' },
-              { name: 'Indian Fruits', emoji: '🥭', gradient: 'from-orange-400 to-red-400' },
-              { name: 'Flours and Pulses', emoji: '🌾', gradient: 'from-stone-400 to-yellow-600' },
+              { name: 'New Arrivals', emoji: '✨', gradient: 'from-amber-400 to-yellow-400', category: 'New Arrivals' },
+              { name: 'Rice Bag', emoji: '🍚', gradient: 'from-emerald-400 to-teal-400', category: 'Rice Bag' },
+              { name: 'Vegetables', emoji: '🥬', gradient: 'from-green-400 to-emerald-400', category: 'Vegetables' },
+              { name: 'Idly Dosa Batter Box - Readymade', emoji: '🥞', gradient: 'from-purple-400 to-indigo-400', category: 'Idly Dosa Batter Box - Readymade' },
+              { name: 'Indian Fruits', emoji: '🥭', gradient: 'from-orange-400 to-red-400', category: 'Indian Fruits' },
+              { name: 'Flours and Pulses', emoji: '🌾', gradient: 'from-stone-400 to-yellow-600', category: 'Flours and Pulses' },
             ].map((cat, i) => (
               <motion.button
                 key={i}
-                onClick={() => setCurrentPage('products')}
+                onClick={() => {
+                  setCurrentCategory(cat.category)
+                  setCurrentPage('category')
+                }}
                 className="group relative flex flex-col items-center"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -412,7 +393,7 @@ export default function HomePage() {
       </section>
 
       {/* UP TO 50% OFF Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-900 to-gray-950">
+      <section id="offers-section" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-900 to-gray-950">
         <div className="max-w-7xl mx-auto">
           <motion.div
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12"
@@ -440,14 +421,14 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {offerProducts.map((product, index) => {
-              const otherProducts = offerProducts.filter(p => p.id !== product.id).slice(0, 4)
+              const related = getRandomRelated(product.id)
               return (
                 <div
                   key={product.id}
                   onClick={() => {
                     setSectionProducts(offerProducts)
                     setSelectedProduct(product)
-                    setRelatedProducts(otherProducts)
+                    setRelatedProducts(related)
                     setCurrentPage('product-detail')
                   }}
                   className="cursor-pointer"
@@ -465,9 +446,9 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <h3 className="font-semibold text-white text-lg leading-tight">{product.name}</h3>
-                    <p className="text-sm text-emerald-400 mt-1">GROSGO</p>
+                    <p className="text-sm text-emerald-400 mt-1">{product.brand || 'GROSGO'}</p>
                     <div className="mt-3">
-                      <span className="text-white font-bold text-xl">£{product.price}</span>
+                      <span className="text-white font-bold text-xl">₹{product.price}</span>
                     </div>
                     <button
                       onClick={e => {
@@ -488,7 +469,7 @@ export default function HomePage() {
       </section>
 
       {/* BEST SELLERS Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-900 to-gray-950">
+      <section id="best-sellers-section" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-900 to-gray-950">
         <div className="max-w-7xl mx-auto">
           <motion.div
             className="text-center mb-16"
@@ -504,14 +485,14 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {bestSellers.map((product, index) => {
-              const otherProducts = bestSellers.filter(p => p.id !== product.id).slice(0, 4)
+              const related = getRandomRelated(product.id)
               return (
                 <div
                   key={product.id}
                   onClick={() => {
                     setSectionProducts(bestSellers)
                     setSelectedProduct(product)
-                    setRelatedProducts(otherProducts)
+                    setRelatedProducts(related)
                     setCurrentPage('product-detail')
                   }}
                   className="cursor-pointer"
@@ -529,9 +510,9 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <h3 className="font-semibold text-white text-lg leading-tight">{product.name}</h3>
-                    <p className="text-sm text-emerald-400 mt-1">GROSGO</p>
+                    <p className="text-sm text-emerald-400 mt-1">{product.brand || 'GROSGO'}</p>
                     <div className="mt-3">
-                      <span className="text-white font-bold text-xl">£{product.price}</span>
+                      <span className="text-white font-bold text-xl">₹{product.price}</span>
                     </div>
                     <button
                       onClick={e => {
@@ -552,7 +533,7 @@ export default function HomePage() {
       </section>
 
       {/* SPECIAL COMBOS Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-900 to-gray-950">
+      <section id="combos-section" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-900 to-gray-950">
         <div className="max-w-7xl mx-auto">
           <motion.div
             className="text-center mb-16"
@@ -568,14 +549,14 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {combos.map((product, index) => {
-              const otherProducts = combos.filter(p => p.id !== product.id).slice(0, 4)
+              const related = getRandomRelated(product.id)
               return (
                 <div
                   key={product.id}
                   onClick={() => {
                     setSectionProducts(combos)
                     setSelectedProduct(product)
-                    setRelatedProducts(otherProducts)
+                    setRelatedProducts(related)
                     setCurrentPage('product-detail')
                   }}
                   className="cursor-pointer"
@@ -589,7 +570,7 @@ export default function HomePage() {
                     className="group bg-white/5 backdrop-blur-sm border border-emerald-400/20 rounded-2xl p-6 hover:bg-white/10 hover:border-emerald-400/40 transition-all"
                   >
                     <h3 className="font-bold text-white text-xl mb-2">{product.name}</h3>
-                    <p className="text-3xl font-bold text-white mb-4">£{product.price}</p>
+                    <p className="text-3xl font-bold text-white mb-4">₹{product.price}</p>
                     <div className="space-y-3 mb-6">
                       {[
                         { emoji: '🥕', name: 'Carrot' },
@@ -627,7 +608,7 @@ export default function HomePage() {
       </section>
 
       {/* PRODUCTS Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-900 to-gray-950">
+      <section id="products-section" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-900 to-gray-950">
         <div className="max-w-7xl mx-auto">
           <motion.div
             className="text-center mb-16"
@@ -643,14 +624,14 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {productsList.map((product, index) => {
-              const otherProducts = productsList.filter(p => p.id !== product.id).slice(0, 4)
+              const related = getRandomRelated(product.id)
               return (
                 <div
                   key={product.id}
                   onClick={() => {
                     setSectionProducts(productsList)
                     setSelectedProduct(product)
-                    setRelatedProducts(otherProducts)
+                    setRelatedProducts(related)
                     setCurrentPage('product-detail')
                   }}
                   className="cursor-pointer"
@@ -673,15 +654,15 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <h3 className="font-semibold text-white text-lg leading-tight">{product.name}</h3>
-                    <p className="text-sm text-emerald-400 mt-1">GROSGO</p>
+                    <p className="text-sm text-emerald-400 mt-1">{product.brand || 'GROSGO'}</p>
                     <div className="mt-3 flex items-baseline gap-2">
                       {product.originalPrice ? (
                         <>
-                          <span className="text-white font-bold text-xl">£{product.price}</span>
-                          <span className="text-gray-500 line-through text-sm">£{product.originalPrice}</span>
+                          <span className="text-white font-bold text-xl">₹{product.price}</span>
+                          <span className="text-gray-500 line-through text-sm">₹{product.originalPrice}</span>
                         </>
                       ) : (
-                        <span className="text-white font-bold text-xl">£{product.price}</span>
+                        <span className="text-white font-bold text-xl">₹{product.price}</span>
                       )}
                     </div>
                     <button

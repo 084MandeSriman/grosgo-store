@@ -1,13 +1,18 @@
 import { ArrowLeft, Star, Plus, Minus, Heart, Share2, Truck, ShieldCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useApp } from '../App'
 
 export default function ProductDetailPage() {
-  const { setCurrentPage, selectedProduct, addToCart, relatedProducts, setSelectedProduct, setRelatedProducts, sectionProducts } = useApp()
+  const { setCurrentPage, selectedProduct, addToCart, relatedProducts, setSelectedProduct, setRelatedProducts, fullProductList } = useApp()
   const [quantity, setQuantity] = useState(1)
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   if (!selectedProduct) {
     setCurrentPage('products')
@@ -21,19 +26,23 @@ export default function ProductDetailPage() {
     setCurrentPage('cart')
   }
 
- const handleRelatedClick = (product: typeof selectedProduct) => {
-  if (product) {
-    const newRelated = sectionProducts.filter(p => p.id !== product.id).slice(0, 4)
-    setSelectedProduct(product)
-    setRelatedProducts(newRelated)
-    setQuantity(1)
+  const handleRelatedClick = (product: typeof selectedProduct) => {
+    if (product) {
+      // Get 4 new random products from the SAME CATEGORY as the clicked product
+      const newRelated = fullProductList
+        .filter(p => p.category === product.category && p.id !== product.id)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 4)
+      setSelectedProduct(product)
+      setRelatedProducts(newRelated)
+      setQuantity(1)
+    }
   }
-}
+
   return (
     <div className="bg-gradient-to-br from-[#0A0E27] via-[#0F172A] to-[#0A0E27] min-h-screen">
       <Header />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
         <button
           onClick={() => setCurrentPage('products')}
           className="flex items-center gap-2 text-gray-400 hover:text-emerald-400 mb-8 transition-colors"
